@@ -21,8 +21,7 @@ const register = [
       }
       const user = new User({ kh_id, name, email, password, dob, isStudent, role, phone });
       await user.save();
-      console.log('✅ Đăng ký thành công:', email);
-      res.status(201).json({ message: 'Đăng ký thành công' });
+      res.status(201).json({ message: 'Đăng ký success' });
     } catch (err) {
       console.error('🔥 Lỗi trong register:', err);
       res.status(500).json({ message: 'Lỗi server', error: err.message });
