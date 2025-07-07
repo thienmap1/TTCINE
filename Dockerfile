@@ -7,6 +7,6 @@ RUN npm install --production
 
 COPY server.js ./
 
-EXPOSE 3000
+EXPOSE 5000
 
 CMD ["npm", "start"]
