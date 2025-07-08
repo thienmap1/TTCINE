@@ -3,7 +3,7 @@ const { body, validationResult } = require('express-validator');
 
 const getAllMovies = async (req, res) => {
   try {
-    const movies = await Movie.find().populate('genreId');
+    const movies = await Movie.find();
     res.status(200).json(movies);
   } catch (err) {
     res.status(500).json({ message: 'Lỗi khi lấy danh sách phim', error: err.message });
@@ -12,7 +12,7 @@ const getAllMovies = async (req, res) => {
 
 const getMovieById = async (req, res) => {
   try {
-    const movie = await Movie.findOne({ phim_id: req.params.id }).populate('genreId');
+    const movie = await Movie.findOne({ phim_id: req.params.id })
     if (!movie) return res.status(404).json({ message: 'Không tìm thấy phim' });
     res.status(200).json(movie);
   } catch (err) {
@@ -31,11 +31,11 @@ const createMovie = [
     // if (req.user.role !== 'admin') return res.status(403).json({ message: 'Chỉ admin được phép thêm phim' });
 
     try {
-      const { phim_id, title, language, subtitle, label, description, duration, releaseDate, endDate, genreId } = req.body;
+      const { phim_id, title, language, subtitle, label, description, duration, releaseDate, endDate, genre, director, actors, poster, trailer } = req.body;
       const existingMovie = await Movie.findOne({ phim_id });
       if (existingMovie) return res.status(400).json({ message: 'ID phim đã tồn tại' });
 
-      const movie = new Movie({ phim_id, title, language, subtitle, label, description, duration, releaseDate, endDate, genreId });
+      const movie = new Movie({ phim_id, title, language, subtitle, label, description, duration, releaseDate, endDate, genre, director, actors, poster, trailer });
       await movie.save();
       res.status(201).json({ message: 'Thêm phim thành công', movie });
     } catch (err) {

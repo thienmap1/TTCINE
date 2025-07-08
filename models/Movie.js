@@ -10,7 +10,11 @@ const movieSchema = new mongoose.Schema({
   duration: { type: Number, required: true, min: 1 },
   releaseDate: { type: Date, required: true },
   endDate: { type: Date, required: true },
-  genreId: { type: mongoose.Schema.Types.ObjectId, ref: 'Genre', required: true }
+  genre: { type: String, required: true },
+  director: { type: String },                         
+  actors: [{ type: String }],                       
+  poster: { type: String },                           
+  trailer: { type: String },                         
 });
 
 module.exports = mongoose.model('Movie', movieSchema);

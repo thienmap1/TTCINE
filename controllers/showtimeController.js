@@ -3,7 +3,10 @@ const { body, validationResult } = require('express-validator');
 
 const getShowtimes = async (req, res) => {
   try {
-    const showtimes = await Showtime.find().populate('movieId roomId');
+    const showtimes = await Showtime.find()
+      .populate('movieId', 'title')
+      .populate('roomId', 'name');      
+    res.status(200).json(showtimes);
     res.json(showtimes);
   } catch (error) {
     res.status(500).json({ message: 'Lỗi khi lấy danh sách suất chiếu', error: error.message });
@@ -12,24 +15,48 @@ const getShowtimes = async (req, res) => {
 
 const createShowtime = [
   body('suat_chieu_id').isInt().withMessage('ID suất chiếu phải là số nguyên'),
-  body('startTime').notEmpty().withMessage('Giờ bắt đầu là bắt buộc'),
-  body('date').isDate().withMessage('Ngày chiếu không hợp lệ'),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Chỉ admin được phép thêm suất chiếu' });
-
     try {
-      const { suat_chieu_id, startTime, endTime, date, movieId, roomId } = req.body;
-      const showtime = new Showtime({ suat_chieu_id, startTime, endTime, date, movieId, roomId });
+      const {
+        suat_chieu_id,
+        startTime,
+        endTime,
+        date,
+        movieId,
+        roomId
+      } = req.body;
+
+      const existing = await Showtime.findOne({ suat_chieu_id });
+      if (existing) return res.status(400).json({ message: 'ID suất chiếu đã tồn tại' });
+
+      const showtime = new Showtime({
+        suat_chieu_id,
+        startTime,
+        endTime,
+        date,
+        movieId,
+        roomId
+      });
+
       await showtime.save();
-      res.status(201).json({ message: 'Thêm suất chiếu thành công', showtime });
-    } catch (error) {
-      res.status(500).json({ message: 'Lỗi khi thêm suất chiếu', error: error.message });
+
+      const populatedShowtime = await Showtime.findById(showtime._id)
+        .populate('movieId', 'title')
+        .populate('roomId', 'name');
+
+      res.status(201).json({
+        message: 'Thêm suất chiếu thành công',
+        showtime: populatedShowtime
+      });
+    } catch (err) {
+      res.status(500).json({ message: 'Lỗi khi thêm suất chiếu', error: err.message });
     }
   }
 ];
+
 
 const updateShowtime = [
   body('startTime').optional().notEmpty().withMessage('Giờ bắt đầu không được để trống'),
@@ -37,17 +64,28 @@ const updateShowtime = [
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Chỉ admin được phép sửa suất chiếu' });
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Chỉ admin được phép sửa suất chiếu' });
+    }
 
     try {
-      const showtime = await Showtime.findOneAndUpdate({ suat_chieu_id: req.params.id }, req.body, { new: true });
+      const showtime = await Showtime.findOneAndUpdate(
+        { suat_chieu_id: req.params.id },
+        req.body,
+        { new: true }
+      )
+      .populate('movieId', 'title')
+      .populate('roomId', 'name');   
+
       if (!showtime) return res.status(404).json({ message: 'Không tìm thấy suất chiếu' });
+
       res.json({ message: 'Cập nhật suất chiếu thành công', showtime });
     } catch (error) {
       res.status(500).json({ message: 'Lỗi khi cập nhật suất chiếu', error: error.message });
     }
   }
 ];
+
 
 const deleteShowtime = async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Chỉ admin được phép xóa suất chiếu' });
