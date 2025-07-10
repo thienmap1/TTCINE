@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.get('/', getSeats);
 router.post('/', requireAuth, requireAdmin, createSeat);
-router.put('/:id', requireAuth, requireAdmin, updateSeat);
-router.delete('/:id', requireAuth, requireAdmin, deleteSeat);
+router.put('/:ghe_id', requireAuth, requireAdmin, updateSeat);
+router.delete('/:ghe_id', requireAuth, requireAdmin, deleteSeat);
 
 module.exports = router;

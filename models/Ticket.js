@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const ticketSchema = new mongoose.Schema({
-  ve_id: { type: Number, required: true, unique: true }, // Thêm ve_id
+  ve_id: { type: Number, required: true, unique: true }, 
   orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: true },
   showtimeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Showtime', required: true },
   seatId: { type: mongoose.Schema.Types.ObjectId, ref: 'Seat', required: true },
@@ -9,7 +9,6 @@ const ticketSchema = new mongoose.Schema({
   status: { type: String, enum: ['pending', 'paid', 'canceled'], default: 'pending', required: true }
 });
 
-// Validation để kiểm tra trùng ghế
 ticketSchema.pre('save', async function (next) {
   const existingTicket = await this.constructor.findOne({
     showtimeId: this.showtimeId,

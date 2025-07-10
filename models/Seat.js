@@ -16,7 +16,7 @@ seatSchema.pre('save', async function (next) {
     row: this.row
   });
   if (existingSeat) {
-    throw new Error('Seat number and row already exist in this room');
+    throw new Error('Đã tồn tại trong room');
   }
   next();
 });

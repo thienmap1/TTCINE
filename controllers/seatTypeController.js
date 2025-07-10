@@ -9,6 +9,16 @@ const getSeatTypes = async (req, res) => {
     res.status(500).json({ message: 'Lỗi khi lấy danh sách loại ghế', error: error.message });
   }
 };
+const getSeatTypeByCustomId = async (req, res) => {
+  try {
+    const seatType = await SeatType.findOne({ loai_ghe_id: req.params.id });
+    if (!seatType) return res.status(404).json({ message: 'Không tìm thấy loại ghế' });
+
+    res.json(seatType);
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi server', error: err.message });
+  }
+};
 
 const createSeatType = [
   body('loai_ghe_id').isInt().withMessage('ID loại ghế phải là số nguyên'),
@@ -38,22 +48,21 @@ const createSeatType = [
 
 const updateSeatType = [
   body('name').optional().notEmpty().withMessage('Tên loại ghế không được để trống'),
-  body('price').optional().isFloat({ min: 0 }).withMessage('Giá ghế phải lớn hơn hoặc bằng 0'),
+  body('price').optional().isInt({ min: 0 }).withMessage('Giá phải là số không âm'),
   async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-
-    if (!req.user || req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Chỉ admin được phép sửa loại ghế' });
-    }
-
     try {
+      const { loai_ghe_id } = req.params;
+
       const seatType = await SeatType.findOneAndUpdate(
-        { loai_ghe_id: req.params.id },
+        { loai_ghe_id },
         req.body,
         { new: true }
       );
-      if (!seatType) return res.status(404).json({ message: 'Không tìm thấy loại ghế' });
+
+      if (!seatType) {
+        return res.status(404).json({ message: 'Không tìm thấy loại ghế để cập nhật' });
+      }
+
       res.json({ message: 'Cập nhật loại ghế thành công', seatType });
     } catch (error) {
       res.status(500).json({ message: 'Lỗi khi cập nhật loại ghế', error: error.message });
@@ -61,23 +70,21 @@ const updateSeatType = [
   }
 ];
 
+
 const deleteSeatType = async (req, res) => {
-  if (!req.user || req.user.role !== 'admin') {
-    return res.status(403).json({ message: 'Chỉ admin được phép xóa loại ghế' });
-  }
-
   try {
-    const seatType = await SeatType.findOne({ loai_ghe_id: req.params.id });
-    if (!seatType) return res.status(404).json({ message: 'Không tìm thấy loại ghế' });
+    const { loai_ghe_id } = req.params;
 
-    const hasSeats = await Seat.findOne({ seatTypeId: seatType._id });
-    if (hasSeats) return res.status(400).json({ message: 'Không thể xóa loại ghế vì có ghế liên quan' });
+    const deleted = await SeatType.findOneAndDelete({ loai_ghe_id });
 
-    await SeatType.deleteOne({ loai_ghe_id: req.params.id });
+    if (!deleted) {
+      return res.status(404).json({ message: 'Không tìm thấy loại ghế để xóa' });
+    }
+
     res.json({ message: 'Xóa loại ghế thành công' });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi khi xóa loại ghế', error: error.message });
   }
 };
 
-module.exports = { getSeatTypes, createSeatType, updateSeatType, deleteSeatType };
+module.exports = { getSeatTypes,getSeatTypeByCustomId, createSeatType, updateSeatType, deleteSeatType };
