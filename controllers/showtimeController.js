@@ -7,7 +7,7 @@ const getShowtimes = async (req, res) => {
       .populate('movieId', 'title')
       .populate('roomId', 'name');      
     res.status(200).json(showtimes);
-    res.json(showtimes);
+
   } catch (error) {
     res.status(500).json({ message: 'Lỗi khi lấy danh sách suất chiếu', error: error.message });
   }
