@@ -12,6 +12,8 @@ const seatTypeRoutes = require('./routes/seatTypeRoutes');
 const seatRoutes = require('./routes/seatRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const genreRoutes = require('./routes/genreRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const orderHistoryRoutes = require('./routes/orderHistoryRoutes');
 
 
 dotenv.config();
@@ -33,6 +35,8 @@ app.use('/api/seat-types', seatTypeRoutes);
 app.use('/api/seats', seatRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/genres', genreRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/order-history', orderHistoryRoutes);
 
 
 // Health check endpoint

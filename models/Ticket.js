@@ -16,7 +16,7 @@ ticketSchema.pre('save', async function (next) {
     status: { $ne: 'canceled' }
   });
   if (existingTicket) {
-    throw new Error('Seat already booked for this showtime');
+    throw new Error('Chỗ ngồi đã được đặt cho showtime này');
   }
   next();
 });
