@@ -11,5 +11,8 @@ router.get('/', getSeatTypes);
 router.get('/by-ma/:id', getSeatTypeByCustomId);
 router.put('/:loai_ghe_id', controller.updateSeatType); 
 router.delete('/:loai_ghe_id', controller.deleteSeatType);  
+router.post('/', requireAuth, requireAdmin, createSeatType);
+
+
 
 module.exports = router;
