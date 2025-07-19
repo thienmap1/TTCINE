@@ -24,6 +24,7 @@ const createSeatType = [
   body('loai_ghe_id').isInt().withMessage('ID loại ghế phải là số nguyên'),
   body('name').notEmpty().withMessage('Tên loại ghế là bắt buộc'),
   body('price').isFloat({ min: 0 }).withMessage('Giá ghế phải lớn hơn hoặc bằng 0'),
+  body('color').notEmpty().withMessage('Màu sắc là bắt buộc'),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
@@ -33,11 +34,11 @@ const createSeatType = [
     }
 
     try {
-      const { loai_ghe_id, name, price } = req.body;
+      const { loai_ghe_id, name, price,color  } = req.body;
       const existingSeatType = await SeatType.findOne({ loai_ghe_id });
       if (existingSeatType) return res.status(400).json({ message: 'ID loại ghế đã tồn tại' });
 
-      const seatType = new SeatType({ loai_ghe_id, name, price });
+      const seatType = new SeatType({ loai_ghe_id, name, price,color  });
       await seatType.save();
       res.status(201).json({ message: 'Thêm loại ghế thành công', seatType });
     } catch (error) {
@@ -49,6 +50,7 @@ const createSeatType = [
 const updateSeatType = [
   body('name').optional().notEmpty().withMessage('Tên loại ghế không được để trống'),
   body('price').optional().isInt({ min: 0 }).withMessage('Giá phải là số không âm'),
+  body('color').optional().notEmpty().withMessage('Màu không được để trống'),
   async (req, res) => {
     try {
       const { loai_ghe_id } = req.params;

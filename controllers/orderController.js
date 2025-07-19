@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 
 const Order = require('../models/Order');
 const QRCode = require('qrcode');
+const OrderHistory = require('../models/OrderHistory');
+const Ticket = require('../models/Ticket');
+const { v4: uuidv4 } = require('uuid');
+
 const { body, validationResult } = require('express-validator');
 
 const createOrder = [
@@ -39,6 +43,48 @@ const getOrdersByUser = async (req, res) => {
     res.status(500).json({ message: 'Lỗi lấy đơn hàng', error: error.message });
   }
 };
+const payOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
 
-module.exports = { createOrder, getOrdersByUser };
+
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
+
+
+    const isOwner = order.userId.toString() === req.user.userId;
+    const isAdmin = req.user.role === 'admin';
+    if (!isOwner && !isAdmin)
+      return res.status(403).json({ message: 'Bạn không có quyền thanh toán đơn hàng này' });
+
+
+    order.status = 'paid';
+    await order.save();
+
+
+    const history = new OrderHistory({
+      lsdh_id: parseInt(uuidv4().replace(/-/g, '').slice(0, 10), 16),
+      orderId: order._id,
+      status: 'paid',
+      timestamp: new Date()
+    });
+    await history.save();
+
+    res.json({ message: 'Thanh toán thành công', order });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi khi thanh toán', error: error.message });
+  }
+};
+
+const getTicketsByOrder = async (req, res) => {
+  try {
+    const orderId = req.params.orderId;
+    const tickets = await Ticket.find({ orderId }).populate('seatId showtimeId');
+    res.json(tickets);
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi khi lấy vé theo đơn hàng', error: error.message });
+  }
+};
+
+module.exports = { createOrder, getOrdersByUser,payOrder,getTicketsByOrder };
 

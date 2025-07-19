@@ -3,6 +3,7 @@ const Order = require('../models/Order');
 const Showtime = require('../models/Showtime');
 const Seat = require('../models/Seat');
 const QRCode = require('qrcode');
+const OrderHistory = require('../models/OrderHistory');
 const { body, validationResult } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const bookTicket = async (req, res) => {
@@ -36,6 +37,13 @@ const bookTicket = async (req, res) => {
       qrCode
     });
     await order.save();
+    const history = new OrderHistory({
+      lsdh_id: parseInt(uuidv4().replace(/-/g, '').slice(0, 10), 16),
+      orderId: order._id,
+      status: 'pending',
+      timestamp: new Date()
+    });
+    await history.save();
 
     const ticket = new Ticket({
       ve_id,
