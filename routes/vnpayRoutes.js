@@ -1,9 +1,8 @@
-const express = require('express');
-const router = express.Router();
-const { payment } = require('../controllers/vnpayController');
-const { vnpayReturn } = require('../controllers/vnpayReturn');
+const express = require("express")
+const router = express.Router()
+const { createVNPAYOder, callbackVNPAY } = require("../controllers/vnpayController")
 
-router.post('/create_payment', payment);
-// router.get('/vnpay_return', vnpayReturn);
+router.post("/create_payment", createVNPAYOder)
+router.get("/vnpay_return", callbackVNPAY)
 
-module.exports = router;
+module.exports = router
