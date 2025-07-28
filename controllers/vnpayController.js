@@ -57,8 +57,8 @@ const createVNPAYOder = async (req, res) => {
 
     // ⚙️ Khởi tạo đối tượng VNPay
     const vnpay = new VNPay({
-      tmnCode: "GULKO9FP",
-      secureSecret: "O9WTQBZVY5IT646J2GCM7AT9SGUHTPYF",
+      tmnCode: "MBL6AAFV",
+      secureSecret: "L4VPBXWOTOTODLY4S5N5OSUOUYXO53C2",
       vnpayHost: "https://sandbox.vnpayment.vn",
       testMode: true,
       hashAlgorithm: "SHA512",
@@ -71,12 +71,12 @@ const createVNPAYOder = async (req, res) => {
 
     // 🌐 Tạo URL thanh toán
     const vnpayResponse = await vnpay.buildPaymentUrl({
-      vnp_Amount: order.totalAmount * 100, // VNPAY yêu cầu số tiền tính bằng đồng
+      vnp_Amount: order.totalAmount, // VNPAY yêu cầu số tiền tính bằng đồng
       vnp_IpAddr: req.ip || "127.0.0.1",
       vnp_TxnRef: String(order.dh_id),
       vnp_OrderInfo: `Thanh toán đơn hàng #${order.dh_id}`,
       vnp_OrderType: ProductCode.Other,
-      vnp_ReturnUrl: `http://localhost:5000/api/payment/vnpay/callback`,
+      vnp_ReturnUrl:'http://localhost:5000/api/vnpay/vnpay_return',
       vnp_Locale: VnpLocale.VN,
       vnp_CreateDate: dateFormat(new Date()),
       vnp_ExpireDate: dateFormat(tomorrow),
