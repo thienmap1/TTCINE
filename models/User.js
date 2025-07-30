@@ -7,7 +7,9 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   dob: { type: Date },
   isStudent: { type: Boolean, default: false },
-  role: { type: String, enum: ['user', 'admin'], default: 'user' }
+  role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  otp: String,
+  otpExpires: Date,
 });
 
 module.exports = mongoose.model('User', userSchema);

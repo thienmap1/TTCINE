@@ -15,6 +15,8 @@ const genreRoutes = require('./routes/genreRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const orderHistoryRoutes = require('./routes/orderHistoryRoutes');
 const vnpayRoutes = require('./routes/vnpayRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+
 
 
 
@@ -42,6 +44,8 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/order-history', orderHistoryRoutes);
 app.use('/api/report', reportRoutes);
 app.use('/api/vnpay', vnpayRoutes);
+app.use('/api/admin', adminRoutes);
+
 
 
 
