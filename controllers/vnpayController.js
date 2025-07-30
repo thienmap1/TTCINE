@@ -68,6 +68,7 @@
 // module.exports = { createVNPAYOder, callbackVNPAY };
 const Order = require("../models/Order");
 const OrderHistory = require("../models/OrderHistory");
+const Ticket = require("../models/Ticket");
 const {
   VNPay,
   ignoreLogger,
@@ -141,11 +142,17 @@ const callbackVNPAY = async (req, res) => {
     if (vnp_ResponseCode === "00") {
       const order = await Order.findOne({ dh_id: Number(vnp_TxnRef) });
       if (order) {
-        // Cập nhật trạng thái đơn hàng
+        // ✅ Cập nhật trạng thái đơn hàng
         order.status = "paid";
         await order.save();
 
-        // Ghi nhận lịch sử thanh toán
+        // ✅ Cập nhật trạng thái các vé trong đơn hàng
+        await Ticket.updateMany(
+          { orderId: order._id },
+          { status: "paid" }
+        );
+
+        // ✅ Ghi nhận lịch sử thanh toán
         await OrderHistory.create({
           lsdh_id: Date.now(),
           orderId: order._id,
@@ -155,12 +162,13 @@ const callbackVNPAY = async (req, res) => {
       }
     }
 
-    // Chuyển hướng về frontend
+    // ✅ Chuyển hướng về frontend
     return res.redirect(`http://localhost:5173/booking/confirm?vnp_ResponseCode=${vnp_ResponseCode}&idOrder=${vnp_TxnRef}`);
   } catch (error) {
     console.error("❌ Lỗi callback VNPAY:", error);
     return res.status(500).send("Lỗi callback VNPAY");
   }
 };
+
 
 module.exports = { createVNPAYOder, callbackVNPAY };
