@@ -5,7 +5,12 @@ const orderSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   orderDate: { type: Date, default: Date.now, required: true },
   totalAmount: { type: Number, required: true },
-  qrCode: { type: String, required: true }
+  qrCode: { type: String, required: true },
+  status: {
+    type: String,
+    enum: ['pending', 'paid', 'cancelled'],
+    default: 'pending'
+  }
 });
 
 module.exports = mongoose.models.Order || mongoose.model('Order', orderSchema);

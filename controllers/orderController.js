@@ -25,7 +25,7 @@ const createOrder = [
       const qrText = `ORDER-${dh_id}`;
       const qrCode = await QRCode.toDataURL(qrText);
 
-      const order = new Order({ dh_id, userId, totalAmount, qrCode });
+      const order = new Order({ dh_id, userId, totalAmount, qrCode,status: 'pending' });
       await order.save();
 
       res.status(201).json({ message: 'Tạo đơn hàng thành công', order });

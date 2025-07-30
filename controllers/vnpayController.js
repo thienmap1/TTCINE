@@ -1,45 +1,80 @@
-// const { VNPay, ignoreLogger, ProductCode, VnpLocale, dateFormat } = require("vnpay")
+
+// const Order = require('../models/Order');
+// const { VNPay, ignoreLogger, ProductCode, VnpLocale, dateFormat } = require("vnpay");
 
 // const createVNPAYOder = async (req, res) => {
-//   const { amountOrder, idOrder } = req.body
-//   const vnpay = new VNPay({
-//     tmnCode: "GULKO9FP",
-//     secureSecret: "O9WTQBZVY5IT646J2GCM7AT9SGUHTPYF",
-//     vnpayHost: "https://sandbox.vnpayment.vn",
-//     testMode: true, // tùy chọn
-//     hashAlgorithm: "SHA512", // tùy chọn
-//     loggerFn: ignoreLogger, // tùy chọn
-//   })
+//   try {
+//     const { idOrder } = req.body;
 
-//   const tomorrow = new Date()
-//   tomorrow.setDate(tomorrow.getDate() + 1)
-//   const vnpayResponse = await vnpay.buildPaymentUrl({
-//     vnp_Amount: amountOrder, //
-//     vnp_IpAddr: "127.0.0.1", //
-//     vnp_TxnRef: `${idOrder}`, // Sử dụng paymentId thay vì singlePaymentId
-//     vnp_OrderInfo: `${idOrder} `,
-//     vnp_OrderType: ProductCode.Other,
-//     vnp_ReturnUrl: `http://localhost:5000/api/payment/vnpay/callback`, //
-//     vnp_Locale: VnpLocale.VN, // 'vn' hoặc 'en'
-//     vnp_CreateDate: dateFormat(new Date()), // tùy chọn, mặc định là hiện tại
-//     vnp_ExpireDate: dateFormat(tomorrow), // tùy chọn
-//   })
-//   return res.status(200).json({
-//     status: "success",
-//     message: "Tạo đơn hàng thành công",
-//     data: {
-//       vnpayUrl: vnpayResponse,
-//     },
-//   })
-// }
+//     if (!idOrder) {
+//       return res.status(400).json({ status: "fail", message: "Thiếu idOrder" });
+//     }
+
+//     // 🔍 Tìm đơn hàng trong MongoDB theo dh_id
+//     const order = await Order.findOne({ dh_id: idOrder });
+//     if (!order) {
+//       return res.status(404).json({ status: "fail", message: "Không tìm thấy đơn hàng" });
+//     }
+
+//     // ⚙️ Khởi tạo đối tượng VNPay
+//     const vnpay = new VNPay({
+//       tmnCode: "MBL6AAFV",
+//       secureSecret: "L4VPBXWOTOTODLY4S5N5OSUOUYXO53C2",
+//       vnpayHost: "https://sandbox.vnpayment.vn",
+//       testMode: true,
+//       hashAlgorithm: "SHA512",
+//       loggerFn: ignoreLogger,
+//     });
+
+//     // 🕒 Thời gian hết hạn thanh toán (ngày mai)
+//     const tomorrow = new Date();
+//     tomorrow.setDate(tomorrow.getDate() + 1);
+
+//     // 🌐 Tạo URL thanh toán
+//     const vnpayResponse = await vnpay.buildPaymentUrl({
+//       vnp_Amount: order.totalAmount, // VNPAY yêu cầu số tiền tính bằng đồng
+//       vnp_IpAddr: req.ip || "127.0.0.1",
+//       vnp_TxnRef: String(order.dh_id),
+//       vnp_OrderInfo: `Thanh toán đơn hàng #${order.dh_id}`,
+//       vnp_OrderType: ProductCode.Other,
+//       vnp_ReturnUrl:'http://localhost:5000/api/vnpay/vnpay_return',
+//       vnp_Locale: VnpLocale.VN,
+//       vnp_CreateDate: dateFormat(new Date()),
+//       vnp_ExpireDate: dateFormat(tomorrow),
+//     });
+
+//     return res.status(200).json({
+//       status: "success",
+//       message: "Tạo URL thanh toán thành công",
+//       data: {
+//         vnpayUrl: vnpayResponse,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("❌ Lỗi tạo URL VNPAY:", error);
+//     res.status(500).json({
+//       status: "error",
+//       message: "Không thể tạo URL thanh toán",
+//     });
+//   }
+// };
 
 // const callbackVNPAY = async (req, res) => {
-//   const { vnp_ResponseCode, vnp_TxnRef } = req.query
-// }
+//   const { vnp_ResponseCode, vnp_TxnRef } = req.query;
+//   // TODO: xử lý callback sau thanh toán nếu cần
+//   return res.send('✅ Đã nhận callback từ VNPAY');
+// };
 
-// module.exports = { createVNPAYOder, callbackVNPAY }
-const Order = require('../models/Order');
-const { VNPay, ignoreLogger, ProductCode, VnpLocale, dateFormat } = require("vnpay");
+// module.exports = { createVNPAYOder, callbackVNPAY };
+const Order = require("../models/Order");
+const OrderHistory = require("../models/OrderHistory");
+const {
+  VNPay,
+  ignoreLogger,
+  ProductCode,
+  VnpLocale,
+  dateFormat,
+} = require("vnpay");
 
 const createVNPAYOder = async (req, res) => {
   try {
@@ -49,13 +84,11 @@ const createVNPAYOder = async (req, res) => {
       return res.status(400).json({ status: "fail", message: "Thiếu idOrder" });
     }
 
-    // 🔍 Tìm đơn hàng trong MongoDB theo dh_id
     const order = await Order.findOne({ dh_id: idOrder });
     if (!order) {
       return res.status(404).json({ status: "fail", message: "Không tìm thấy đơn hàng" });
     }
 
-    // ⚙️ Khởi tạo đối tượng VNPay
     const vnpay = new VNPay({
       tmnCode: "MBL6AAFV",
       secureSecret: "L4VPBXWOTOTODLY4S5N5OSUOUYXO53C2",
@@ -65,18 +98,16 @@ const createVNPAYOder = async (req, res) => {
       loggerFn: ignoreLogger,
     });
 
-    // 🕒 Thời gian hết hạn thanh toán (ngày mai)
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // 🌐 Tạo URL thanh toán
     const vnpayResponse = await vnpay.buildPaymentUrl({
-      vnp_Amount: order.totalAmount, // VNPAY yêu cầu số tiền tính bằng đồng
+      vnp_Amount: order.totalAmount,
       vnp_IpAddr: req.ip || "127.0.0.1",
       vnp_TxnRef: String(order.dh_id),
       vnp_OrderInfo: `Thanh toán đơn hàng #${order.dh_id}`,
       vnp_OrderType: ProductCode.Other,
-      vnp_ReturnUrl:'http://localhost:5000/api/vnpay/vnpay_return',
+      vnp_ReturnUrl: "http://localhost:5000/api/vnpay/vnpay_return",
       vnp_Locale: VnpLocale.VN,
       vnp_CreateDate: dateFormat(new Date()),
       vnp_ExpireDate: dateFormat(tomorrow),
@@ -99,9 +130,37 @@ const createVNPAYOder = async (req, res) => {
 };
 
 const callbackVNPAY = async (req, res) => {
-  const { vnp_ResponseCode, vnp_TxnRef } = req.query;
-  // TODO: xử lý callback sau thanh toán nếu cần
-  return res.send('✅ Đã nhận callback từ VNPAY');
+  try {
+    const { vnp_ResponseCode, vnp_TxnRef } = req.query;
+
+    if (!vnp_ResponseCode || !vnp_TxnRef) {
+      return res.status(400).send("Thiếu thông tin phản hồi từ VNPAY");
+    }
+
+    // Nếu thanh toán thành công
+    if (vnp_ResponseCode === "00") {
+      const order = await Order.findOne({ dh_id: Number(vnp_TxnRef) });
+      if (order) {
+        // Cập nhật trạng thái đơn hàng
+        order.status = "paid";
+        await order.save();
+
+        // Ghi nhận lịch sử thanh toán
+        await OrderHistory.create({
+          lsdh_id: Date.now(),
+          orderId: order._id,
+          status: "paid",
+          timestamp: new Date()
+        });
+      }
+    }
+
+    // Chuyển hướng về frontend
+    return res.redirect(`http://localhost:5173/booking/confirm?vnp_ResponseCode=${vnp_ResponseCode}&idOrder=${vnp_TxnRef}`);
+  } catch (error) {
+    console.error("❌ Lỗi callback VNPAY:", error);
+    return res.status(500).send("Lỗi callback VNPAY");
+  }
 };
 
 module.exports = { createVNPAYOder, callbackVNPAY };
