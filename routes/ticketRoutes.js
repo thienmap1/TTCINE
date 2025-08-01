@@ -1,18 +1,10 @@
-// const express = require('express');
-// const router = express.Router();
-// const { bookTicket, getUserTickets,deleteTicket } = require('../controllers/ticketController');
-// const { requireAuth } = require('../middleware/authMiddleware');
-
-
-// router.post('/', requireAuth, bookTicket);
-// router.get('/', requireAuth, getUserTickets);
-// router.delete('/:ve_id', requireAuth, deleteTicket);
-// module.exports = router;
 const express = require('express');
 const router = express.Router();
 const { bookTickets, getUserTickets, deleteTicket } = require('../controllers/ticketController');
+const { requireAuth } = require('../middleware/authMiddleware'); // 🔧 THÊM middleware
 
-router.post('/book', bookTickets); // ✅ đã đổi
-router.get('/', getUserTickets);
-router.delete('/:ve_id', deleteTicket);
+router.post('/book', requireAuth, bookTickets);      // ✅ Cần auth
+router.get('/', requireAuth, getUserTickets);        // ✅ Cần auth
+router.delete('/:ve_id', requireAuth, deleteTicket); // ✅ Cần auth
+
 module.exports = router;
