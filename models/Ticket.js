@@ -6,7 +6,6 @@ const ticketSchema = new mongoose.Schema({
   showtimeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Showtime', required: true },
   seatId: { type: mongoose.Schema.Types.ObjectId, ref: 'Seat', required: true },
   price: { type: Number, required: true },
-  status: { type: String, enum: ['pending', 'paid', 'canceled'], default: 'pending', required: true }
 });
 
 ticketSchema.pre('save', async function (next) {

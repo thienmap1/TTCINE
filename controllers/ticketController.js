@@ -26,7 +26,8 @@ const bookTicket = async (req, res) => {
       return res.status(400).json({ message: ' Ghế này đã được đặt trong suất chiếu này' });
     }
 
-    const dh_id = Date.now();
+    const latestOrder = await Order.findOne().sort({ dh_id: -1 }).limit(1);
+    const dh_id = latestOrder ? latestOrder.dh_id + 1 : 1000;
     const qrText = `ORDER-${dh_id}`;
     const qrCode = await QRCode.toDataURL(qrText);
 
