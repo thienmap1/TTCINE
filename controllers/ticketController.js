@@ -6,76 +6,72 @@ const QRCode = require('qrcode');
 const OrderHistory = require('../models/OrderHistory');
 const { body, validationResult } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
-const bookTicket = async (req, res) => {
+const bookTickets = async (req, res) => {
   try {
-    const { ve_id, showtimeId, seatId, price } = req.body;
+    const { showtimeId, seatIds } = req.body;
     const userId = req.user.userId;
 
     const showtime = await Showtime.findById(showtimeId).populate('movieId', 'title');
-    const seat = await Seat.findById(seatId);
     if (!showtime) return res.status(404).json({ message: 'Không tìm thấy suất chiếu' });
-    if (!seat) return res.status(404).json({ message: 'Không tìm thấy ghế' });
 
-    const existingTicket = await Ticket.findOne({
+    const existing = await Ticket.find({
       showtimeId,
-      seatId,
+      seatId: { $in: seatIds },
       status: { $ne: 'canceled' }
     });
-
-    if (existingTicket) {
-      return res.status(400).json({ message: ' Ghế này đã được đặt trong suất chiếu này' });
+    if (existing.length > 0) {
+      return res.status(400).json({ message: 'Một số ghế đã được đặt', seats: existing.map(s => s.seatId) });
     }
 
-    const latestOrder = await Order.findOne().sort({ dh_id: -1 }).limit(1);
-    const dh_id = latestOrder ? latestOrder.dh_id + 1 : 1000;
-    const qrText = `ORDER-${dh_id}`;
-    const qrCode = await QRCode.toDataURL(qrText);
+    const dh_id = Date.now();
+    const qrCode = await QRCode.toDataURL(`ORDER-${dh_id}`);
 
-    const order = new Order({
+    const order = await Order.create({
       dh_id,
       userId,
-      totalAmount: price,
-      qrCode
+      totalAmount: 0, // tạm, cập nhật sau
+      qrCode,
+      status: 'pending'
     });
+
+    let totalAmount = 0;
+    const tickets = [];
+
+    for (const seatId of seatIds) {
+      const seat = await Seat.findById(seatId);
+      if (!seat) continue;
+
+      const ticket = await Ticket.create({
+        ve_id: parseInt(uuidv4().replace(/-/g, '').slice(0, 10), 16),
+        orderId: order._id,
+        showtimeId,
+        seatId,
+        price: seat.price,
+        status: 'pending'
+      });
+
+      totalAmount += seat.price;
+      tickets.push(ticket);
+    }
+
+    order.totalAmount = totalAmount;
     await order.save();
-    const history = new OrderHistory({
-      lsdh_id: parseInt(uuidv4().replace(/-/g, '').slice(0, 10), 16),
+
+    await OrderHistory.create({
+      lsdh_id: Date.now(),
       orderId: order._id,
       status: 'pending',
       timestamp: new Date()
     });
-    await history.save();
-
-    const ticket = new Ticket({
-      ve_id,
-      orderId: order._id,
-      showtimeId,
-      seatId,
-      price,
-      status: 'pending'
-    });
-    await ticket.save();
 
     res.status(201).json({
       message: 'Đặt vé thành công',
-      ticket: {
-        ve_id: ticket.ve_id,
-        price: ticket.price,
-        status: ticket.status,
-        seat: seat.seatNumber,
-        row: seat.row,
-        movie: showtime.movieId.title,
-        showtime: {
-          date: showtime.date,
-          startTime: showtime.startTime,
-          endTime: showtime.endTime
-        }
-      },
       order: {
         dh_id: order.dh_id,
         totalAmount: order.totalAmount,
-        qrCode
-      }
+        qrCode: order.qrCode
+      },
+      tickets
     });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi khi đặt vé', error: error.message });
@@ -114,4 +110,6 @@ const deleteTicket = async (req, res) => {
   }
 };
 
-module.exports = { bookTicket, getUserTickets, deleteTicket };
+module.exports = { bookTickets, getUserTickets, deleteTicket };
+
+

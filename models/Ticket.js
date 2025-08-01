@@ -8,16 +8,5 @@ const ticketSchema = new mongoose.Schema({
   price: { type: Number, required: true },
 });
 
-ticketSchema.pre('save', async function (next) {
-  const existingTicket = await this.constructor.findOne({
-    showtimeId: this.showtimeId,
-    seatId: this.seatId,
-    status: { $ne: 'canceled' }
-  });
-  if (existingTicket) {
-    throw new Error('Chỗ ngồi đã được đặt cho showtime này');
-  }
-  next();
-});
 
 module.exports = mongoose.model('Ticket', ticketSchema);
