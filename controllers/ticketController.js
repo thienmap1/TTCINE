@@ -38,21 +38,24 @@ const bookTickets = async (req, res) => {
     const tickets = [];
 
     for (const seatId of seatIds) {
-      const seat = await Seat.findById(seatId);
-      if (!seat) continue;
+  const seat = await Seat.findById(seatId).populate('seatTypeId');
+  if (!seat || !seat.seatTypeId || typeof seat.seatTypeId.price !== 'number') continue;
 
-      const ticket = await Ticket.create({
-        ve_id: parseInt(uuidv4().replace(/-/g, '').slice(0, 10), 16),
-        orderId: order._id,
-        showtimeId,
-        seatId,
-        price: seat.price,
-        status: 'pending'
-      });
+  const price = seat.seatTypeId.price;
 
-      totalAmount += seat.price;
-      tickets.push(ticket);
-    }
+  const ticket = await Ticket.create({
+    ve_id: parseInt(uuidv4().replace(/-/g, '').slice(0, 10), 16),
+    orderId: order._id,
+    showtimeId,
+    seatId,
+    price,
+    status: 'pending'
+  });
+
+  totalAmount += price;
+  tickets.push(ticket);
+}
+
 
     order.totalAmount = totalAmount;
     await order.save();
