@@ -104,13 +104,18 @@ const bookTickets = async (req, res) => {
 
 const getUserTickets = async (req, res) => {
   try {
-    const tickets = await Ticket.find({ orderId: { $in: await Order.find({ userId: req.user.userId }).select('_id') } })
-      .populate('showtimeId seatId orderId');
+    const tickets = await Ticket.find({
+      orderId: {
+        $in: await Order.find({ userId: req.user.userId }).select('_id')
+      }
+    }).populate('showtimeId seatIds orderId'); // ✅ đã sửa ở đây
+
     res.json(tickets);
   } catch (error) {
     res.status(500).json({ message: 'Lỗi khi lấy danh sách vé', error: error.message });
   }
 };
+
 
 const deleteTicket = async (req, res) => {
   try {
