@@ -105,5 +105,40 @@ const deleteSeat = async (req, res) => {
     res.status(500).json({ message: 'Lỗi khi xóa ghế', error: error.message });
   }
 };
+const getSeatsByShowtime = async (req, res) => {
+  try {
+    const { showtimeId } = req.params;
+    if (!showtimeId) return res.status(400).json({ message: 'Thiếu showtimeId' });
 
-module.exports = { getSeats, createSeat, updateSeat, deleteSeat };
+    // Lấy toàn bộ ghế trong phòng của suất chiếu đó
+    const showtime = await require('../models/Showtime').findById(showtimeId).populate('roomId');
+    if (!showtime) return res.status(404).json({ message: 'Không tìm thấy suất chiếu' });
+
+    const seats = await Seat.find({ roomId: showtime.roomId._id }).lean();
+
+    // Tìm tất cả vé liên quan đến suất chiếu này, loại trừ vé đã hủy
+    const tickets = await Ticket.find({ showtimeId, status: { $ne: 'canceled' } });
+
+    // Tạo map từ seatId → status ưu tiên: paid > pending
+    const seatStatusMap = {};
+    tickets.forEach(ticket => {
+      const id = ticket.seatId.toString();
+      if (ticket.status === 'paid') {
+        seatStatusMap[id] = 'paid';
+      } else if (ticket.status === 'pending' && seatStatusMap[id] !== 'paid') {
+        seatStatusMap[id] = 'pending';
+      }
+    });
+
+    // Gắn status cho từng ghế
+    const result = seats.map(seat => ({
+      ...seat,
+      status: seatStatusMap[seat._id.toString()] || 'available'
+    }));
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi khi lấy ghế theo suất chiếu', error: error.message });
+  }
+};
+module.exports = { getSeats, createSeat, updateSeat, deleteSeat,getSeatsByShowtime };

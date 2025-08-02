@@ -24,9 +24,9 @@ async function clearExpiredOrders() {
       console.log(`[CRON] Đã huỷ đơn hàng ${order.dh_id}`);
     }
 
-    console.log('✅ Đã xử lý clearExpiredOrders');
+    console.log(' Đã xử lý clearExpiredOrders');
   } catch (err) {
-    console.error('❌ Lỗi khi xoá đơn hàng quá hạn:', err);
+    console.error(' Lỗi khi xoá đơn hàng quá hạn:', err);
   }
 }
 
