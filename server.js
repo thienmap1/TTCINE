@@ -18,8 +18,8 @@ const orderHistoryRoutes = require('./routes/orderHistoryRoutes');
 const vnpayRoutes = require('./routes/vnpayRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
-// Cron job
-const clearExpiredTickets = require('./cron/clearExpiredTickets');
+// Cron job xử lý đơn hàng quá hạn
+const clearExpiredOrders = require('./clearExpiredOrders');
 
 dotenv.config();
 const app = express();
@@ -54,20 +54,23 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Lỗi server', error: err.message });
 });
 
+// Kết nối MongoDB và khởi chạy server
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
-    console.log('MongoDB connected');
+    console.log('✅ MongoDB connected');
 
+    // 👉 Gọi clearExpiredOrders mỗi 5 phút (300,000 ms)
     setInterval(() => {
-      clearExpiredTickets();
+      console.log('[CRON] Kiểm tra đơn hàng quá hạn...');
+      clearExpiredOrders();
     }, 5 * 60 * 1000);
 
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on port ${PORT}`);
+      console.log(`🚀 Server running on port ${PORT}`);
     });
   })
   .catch((err) => {
-    console.error('MongoDB connection error:', err.message);
+    console.error('❌ MongoDB connection error:', err.message);
     process.exit(1);
   });

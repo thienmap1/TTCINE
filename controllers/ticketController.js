@@ -36,7 +36,7 @@ const bookTickets = async (req, res) => {
     const existingTicket = await Ticket.findOne({
       showtimeId,
       seatIds: { $in: seatObjectIds },
-      status: { $ne: 'canceled' }
+      // status: { $ne: 'canceled' }
     });
     if (existingTicket) {
       return res.status(400).json({ message: 'Một số ghế đã được đặt trong suất chiếu này' });
@@ -59,7 +59,7 @@ const bookTickets = async (req, res) => {
     const history = new OrderHistory({
       lsdh_id: parseInt(uuidv4().replace(/-/g, '').slice(0, 10), 16),
       orderId: order._id,
-      status: 'pending',
+      // status: 'pending',
       timestamp: new Date()
     });
     await history.save();
@@ -71,7 +71,7 @@ const bookTickets = async (req, res) => {
       showtimeId,
       seatIds: seatObjectIds,
       price,
-      status: 'pending'
+      // status: 'pending'
     });
     await ticket.save();
 
@@ -138,5 +138,21 @@ const deleteTicket = async (req, res) => {
     res.status(500).json({ message: 'Lỗi khi xoá vé', error: error.message });
   }
 };
+const getBookedSeats = async (req, res) => {
+  try {
+    const { showtimeId } = req.params;
 
-module.exports = { bookTickets, getUserTickets, deleteTicket };
+    const tickets = await Ticket.find({ showtimeId });
+
+    const bookedSeatIds = tickets.flatMap(ticket =>
+      ticket.seatIds.map(id => id.toString())
+    );
+
+    res.json({ bookedSeatIds });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi khi lấy ghế đã đặt', error: error.message });
+  }
+};
+
+
+module.exports = { bookTickets, getUserTickets, deleteTicket,getBookedSeats};
