@@ -1,8 +1,9 @@
-
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
+
+// Routes
 const authRoutes = require('./routes/authRoutes');
 const movieRoutes = require('./routes/movieRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
@@ -17,21 +18,18 @@ const orderHistoryRoutes = require('./routes/orderHistoryRoutes');
 const vnpayRoutes = require('./routes/vnpayRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
-
-
-
-
+// Cron job
+const clearExpiredTickets = require('./cron/clearExpiredTickets');
 
 dotenv.config();
-
 const app = express();
 
 // Middleware
-app.use(cors()); 
-app.use(express.json()); 
-app.use(express.urlencoded({ extended: true })); 
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Routes
+// Route mount
 app.use('/api/auth', authRoutes);
 app.use('/api/movies', movieRoutes);
 app.use('/api/tickets', ticketRoutes);
@@ -46,27 +44,24 @@ app.use('/api/report', reportRoutes);
 app.use('/api/vnpay', vnpayRoutes);
 app.use('/api/admin', adminRoutes);
 
-
-
-
-
-
-// Health check endpoint
+// Health check
 app.get('/health', (req, res) => res.status(200).send('OK'));
-
-// Default route
 app.get('/', (req, res) => res.send('Movie Ticket Backend is running'));
 
-// Error handling middleware
+// Global error handler
 app.use((err, req, res, next) => {
   console.error('Server error:', err.stack);
   res.status(500).json({ message: 'Lỗi server', error: err.message });
 });
 
-// MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('MongoDB connected');
+
+    setInterval(() => {
+      clearExpiredTickets();
+    }, 5 * 60 * 1000);
+
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on port ${PORT}`);
